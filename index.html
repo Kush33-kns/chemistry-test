@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>Chemistry CBT Test</title>
+<style>
+body{font-family:Arial;background:#f4f6f9;text-align:center;}
+#quiz-container{width:60%;margin:auto;background:white;padding:20px;border-radius:10px;box-shadow:0 0 10px gray;}
+button{padding:10px 20px;margin:10px;border:none;border-radius:5px;background:#007bff;color:white;cursor:pointer;}
+.option{display:block;margin:10px;padding:10px;border:1px solid #ccc;border-radius:5px;cursor:pointer;}
+.option:hover{background:#e3f2fd;}
+.progress{height:10px;background:#ddd;border-radius:5px;margin-bottom:15px;}
+.progress-bar{height:10px;background:green;width:0%;border-radius:5px;}
+</style>
+</head>
+
+<body>
+
+<h2>Chemical Reactions & Equations Test</h2>
+<div id="timer">Time: 30:00</div>
+
+<div id="quiz-container">
+<div class="progress"><div class="progress-bar" id="progress"></div></div>
+<div id="question"></div>
+<div id="options"></div>
+<button onclick="nextQuestion()">Next</button>
+</div>
+
+<div id="result" style="display:none;"></div>
+
+<script>
+
+let questions = [
+{
+q:"Balance: Fe + O2 → Fe2O3",
+options:["2Fe + O2 → Fe2O3","4Fe + 3O2 → 2Fe2O3","3Fe + O2 → Fe3O4","None"],
+answer:1,
+solution:"Correct balance is 4Fe + 3O2 → 2Fe2O3"
+},
+{
+q:"Type: CaO + H2O → Ca(OH)2",
+options:["Combination","Decomposition","Displacement","Double Displacement"],
+answer:0,
+solution:"Two substances combine → Combination reaction"
+},
+{
+q:"Balance: NH3 + O2 → NO + H2O",
+options:["4NH3 + 5O2 → 4NO + 6H2O","NH3 + O2 → NO + H2O","2NH3 + O2 → 2NO","None"],
+answer:0,
+solution:"Balanced form is 4NH3 + 5O2 → 4NO + 6H2O"
+}
+];
+
+let current = 0;
+let score = 0;
+let selected = -1;
+let time = 1800;
+
+function loadQuestion(){
+document.getElementById("question").innerHTML = (current+1)+". "+questions[current].q;
+let optionsHTML="";
+questions[current].options.forEach((opt,i)=>{
+optionsHTML+=`<div class="option" onclick="selectOption(${i})">${opt}</div>`;
+});
+document.getElementById("options").innerHTML=optionsHTML;
+document.getElementById("progress").style.width=((current)/questions.length*100)+"%";
+selected=-1;
+}
+
+function selectOption(i){
+selected=i;
+}
+
+function nextQuestion(){
+if(selected==questions[current].answer){score+=4;}
+else if(selected!=-1){score-=1;}
+
+current++;
+if(current<questions.length){
+loadQuestion();
+}else{
+showResult();
+}
+}
+
+function showResult(){
+document.getElementById("quiz-container").style.display="none";
+let percent=(score/(questions.length*4))*100;
+let rank="Needs Improvement";
+if(percent>=80)rank="Excellent";
+else if(percent>=60)rank="Good";
+else if(percent>=40)rank="Average";
+
+let resultHTML=`<h2>Test Completed</h2>
+<h3>Score: ${score}</h3>
+<h3>Percentage: ${percent.toFixed(2)}%</h3>
+<h3>Rank: ${rank}</h3><hr>`;
+
+questions.forEach((q,i)=>{
+resultHTML+=`<p><b>Q${i+1}:</b> ${q.solution}</p>`;
+});
+
+document.getElementById("result").innerHTML=resultHTML;
+document.getElementById("result").style.display="block";
+}
+
+setInterval(()=>{
+if(time>0){
+time--;
+let min=Math.floor(time/60);
+let sec=time%60;
+document.getElementById("timer").innerHTML="Time: "+min+":"+ (sec<10?"0"+sec:sec);
+}else{
+showResult();
+}
+},1000);
+
+loadQuestion();
+
+</script>
+
+</body>
+</html>
