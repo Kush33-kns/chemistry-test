@@ -1,0 +1,287 @@
+<!DOCTYPE html>
+<html lang="gu">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DDCET Mock Test: રાસાયણિક પ્રક્રિયાઓ અને સમીકરણો</title>
+    <style>
+        :root {
+            --primary: #1a73e8;
+            --secondary: #5f6368;
+            --success: #188038;
+            --danger: #d93025;
+            --bg: #f8f9fa;
+            --white: #ffffff;
+            --shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+
+        body { font-family: 'Segoe UI', Tahoma, sans-serif; background: var(--bg); margin: 0; color: #202124; }
+        header { background: var(--white); padding: 1rem 2rem; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #dadce0; position: sticky; top: 0; z-index: 100; }
+        .logo { font-weight: bold; color: var(--primary); font-size: 1.5rem; }
+        .timer { font-weight: bold; font-size: 1.2rem; color: var(--danger); background: #fce8e6; padding: 5px 15px; border-radius: 20px; }
+
+        .container { display: flex; max-width: 1200px; margin: 20px auto; gap: 20px; padding: 0 10px; }
+        .main-content { flex: 3; background: var(--white); padding: 25px; border-radius: 8px; box-shadow: var(--shadow); }
+        .sidebar { flex: 1; background: var(--white); padding: 20px; border-radius: 8px; box-shadow: var(--shadow); height: fit-content; }
+
+        .q-meta { display: flex; justify-content: space-between; margin-bottom: 15px; font-weight: 600; color: var(--secondary); border-bottom: 1px solid #eee; padding-bottom: 10px; }
+        .question-text { font-size: 1.2rem; margin-bottom: 20px; line-height: 1.6; }
+        .options-list { list-style: none; padding: 0; }
+        .option { border: 1px solid #dadce0; margin-bottom: 10px; padding: 12px 15px; border-radius: 5px; cursor: pointer; transition: 0.2s; }
+        .option:hover { background: #f1f3f4; }
+        .option.selected { border-color: var(--primary); background: #e8f0fe; color: var(--primary); font-weight: bold; }
+
+        .nav-btns { display: flex; justify-content: space-between; margin-top: 30px; }
+        button { padding: 10px 25px; border: none; border-radius: 4px; cursor: pointer; font-weight: 600; font-size: 1rem; }
+        .btn-prev { background: #e8f0fe; color: var(--primary); }
+        .btn-next { background: var(--primary); color: white; }
+        .btn-submit { background: var(--success); color: white; }
+
+        .palette { display: grid; grid-template-columns: repeat(5, 1fr); gap: 8px; margin-top: 15px; }
+        .p-btn { width: 35px; height: 35px; border: 1px solid #dadce0; display: flex; align-items: center; justify-content: center; border-radius: 4px; cursor: pointer; font-size: 0.9rem; }
+        .p-btn.answered { background: var(--success); color: white; border-color: var(--success); }
+        .p-btn.active { border: 2px solid var(--primary); font-weight: bold; }
+
+        #result-screen { display: none; max-width: 800px; margin: 40px auto; background: white; padding: 40px; border-radius: 12px; text-align: center; box-shadow: var(--shadow); }
+        .review-card { text-align: left; margin-top: 20px; padding: 20px; border-radius: 8px; border: 1px solid #eee; margin-bottom: 15px; }
+        .correct-ans { color: var(--success); font-weight: bold; }
+        .wrong-ans { color: var(--danger); font-weight: bold; }
+        .solution-box { background: #f1f8e9; padding: 10px; margin-top: 10px; border-left: 4px solid var(--success); font-size: 0.95rem; }
+
+        @media (max-width: 768px) {
+            .container { flex-direction: column; }
+            .sidebar { order: -1; }
+        }
+    </style>
+</head>
+<body>
+
+<header>
+    <div class="logo">DDCET 2026: Chemistry</div>
+    <div class="timer" id="timer">45:00</div>
+</header>
+
+<div class="container" id="quiz-container">
+    <div class="main-content">
+        <div class="q-meta">
+            <span id="q-number">Question 1/50</span>
+            <span id="q-diff">Difficulty: Easy</span>
+        </div>
+        <div id="question-area">
+            <div class="question-text" id="question-text">Loading...</div>
+            <div class="options-list" id="options-list"></div>
+        </div>
+        <div class="nav-btns">
+            <button class="btn-prev" onclick="changeQuestion(-1)">પૂર્વ</button>
+            <button class="btn-next" id="next-btn" onclick="changeQuestion(1)">આગળ</button>
+            <button class="btn-submit" id="submit-quiz" style="display:none;" onclick="calculateResult()">ટેસ્ટ સબમિટ કરો</button>
+        </div>
+    </div>
+    <div class="sidebar">
+        <h3>પ્રશ્ન પેલેટ</h3>
+        <div class="palette" id="palette"></div>
+        <div style="margin-top: 20px; font-size: 0.8rem; color: var(--secondary);">
+            <div style="display:flex; align-items:center; gap:5px;"><div style="width:12px;height:12px;background:var(--success);border-radius:2px;"></div> ઉત્તર આપેલ</div>
+            <div style="display:flex; align-items:center; gap:5px; margin-top:5px;"><div style="width:12px;height:12px;background:white;border:1px solid #ccc;border-radius:2px;"></div> બાકી</div>
+        </div>
+    </div>
+</div>
+
+<div id="result-screen">
+    <h2 id="result-status">Results</h2>
+    <div style="font-size: 3rem; margin: 20px 0; color: var(--primary);" id="score-val">0/50</div>
+    <p id="percentage-val">Percentage: 0%</p>
+    <div id="grade-box" style="font-weight: bold; margin-bottom: 30px;">Excellent</div>
+    <button class="btn-next" onclick="location.reload()">ફરીથી પ્રયાસ કરો</button>
+    <div id="review-area"></div>
+</div>
+
+<script>
+    const questions = [
+        // Easy (1-15)
+        { q: "મેગ્નેશિયમ પટ્ટીનું હવામાં દહન થવાથી શું બને છે?", o: ["Mg", "MgO", "MgCl2", "MgCO3"], a: 1, s: "મેગ્નેશિયમ હવામાંના ઓક્સિજન સાથે પ્રક્રિયા કરીને મેગ્નેશિયમ ઓક્સાઈડ બનાવે છે. [સંદર્ભ: 27]", d: "Easy" },
+        { q: "રાસાયણિક સમીકરણમાં પ્રક્રિયકો કઈ બાજુ લખવામાં આવે છે?", o: ["જમણી બાજુ", "ડાબી બાજુ", "ઉપરની બાજુ", "તીરની ઉપર"], a: 1, s: "પ્રક્રિયકોને હંમેશાં ડાબી બાજુએ (LHS) દર્શાવાય છે. [સંદર્ભ: 36]", d: "Easy" },
+        { q: "કળીચૂનાનું રાસાયણિક સૂત્ર શું છે?", o: ["Ca(OH)2", "CaCO3", "CaO", "CaCl2"], a: 2, s: "કેલ્શિયમ ઓક્સાઈડ (CaO) ને કળીચૂનો અથવા ક્વિકલાઇમ કહે છે. [સંદર્ભ: 141]", d: "Easy" },
+        { q: "લોખંડની વસ્તુને ભેજવાળી હવામાં રાખતા શું થાય છે?", o: ["ચમક વધે છે", "કાટ લાગે છે", "દ્રવ્યમાન ઘટે છે", "રંગ બદલાતો નથી"], a: 1, s: "ભેજવાળી હવામાં લોખંડનું ક્ષારણ થાય છે અને કાટ લાગે છે. [સંદર્ભ: 14]", d: "Easy" },
+        { q: "ખોરાકનું પાચન થવું એ કયા પ્રકારની પ્રક્રિયા છે?", o: ["ભૌતિક ફેરફાર", "રાસાયણિક પ્રક્રિયા", "ચુંબકીય ફેરફાર", "એકપણ નહીં"], a: 1, s: "શરીરમાં ખોરાકનું પાચન એ રાસાયણિક પ્રક્રિયા છે. [સંદર્ભ: 17]", d: "Easy" },
+        { q: "પાણીના વિદ્યુત વિભાજન દરમિયાન હાઇડ્રોજન અને ઓક્સિજનનો મોલ ગુણોત્તર કેટલો હોય છે?", o: ["1:1", "1:2", "2:1", "1:8"], a: 2, s: "2H2O -> 2H2 + O2 સમીકરણ મુજબ ગુણોત્તર 2:1 થાય.", d: "Easy" },
+        { q: "રાસાયણિક સમીકરણમાં વાયુ અવસ્થા માટે કયો સંકેત વપરાય છે?", o: ["(s)", "(l)", "(aq)", "(g)"], a: 3, s: "વાયુ (Gas) માટે (g) સંકેત વપરાય છે. [સંદર્ભ: 119]", d: "Easy" },
+        { q: "જલીય દ્રાવણ માટે કયો સંકેત વપરાય છે?", o: ["(aq)", "(l)", "(s)", "(g)"], a: 0, s: "જલીય દ્રાવણ (Aqueous) માટે (aq) વપરાય છે. [સંદર્ભ: 119]", d: "Easy" },
+        { q: "કોલસાનું દહન એ કયા પ્રકારની પ્રક્રિયા છે?", o: ["વિઘટન", "વિસ્થાપન", "સંયોગીકરણ", "દ્વિવિસ્થાપન"], a: 2, s: "C + O2 -> CO2 માં બે પ્રક્રિયકો જોડાઈ એક નીપજ બનાવે છે. [સંદર્ભ: 151]", d: "Easy" },
+        { q: "આથવણની ક્રિયા એ કેવો ફેરફાર છે?", o: ["રાસાયણિક", "ભૌતિક", "કુદરતી નહીં", "કાયમી નથી"], a: 0, s: "દ્રાક્ષનું આથવણ થવું એ રાસાયણિક પ્રક્રિયા છે. [સંદર્ભ: 15]", d: "Easy" },
+        { q: "મેગ્નેશિયમ પટ્ટીને સળગાવતા પહેલા શા માટે સાફ કરવામાં આવે છે?", o: ["ચમક માટે", "ઓક્સાઈડનું સ્તર દૂર કરવા", "દહન ધીમું કરવા", "વજન ઘટાડવા"], a: 1, s: "મેગ્નેશિયમ પર રહેલા રક્ષણાત્મક સ્તરને દૂર કરવા.", d: "Easy" },
+        { q: "નીચેનામાંથી કયું સમીકરણ અસમતોલિત છે?", o: ["C + O2 -> CO2", "Mg + O2 -> MgO", "H2 + Cl2 -> 2HCl", "Zn + H2SO4 -> ZnSO4 + H2"], a: 1, s: "Mg + O2 -> MgO માં ઓક્સિજનના પરમાણુ સમાન નથી. [સંદર્ભ: 43]", d: "Easy" },
+        { q: "સિલ્વર ક્લોરાઈડનો સૂર્યપ્રકાશમાં રંગ કેવો થાય છે?", o: ["સફેદ", "લીલો", "ભૂરો", "રાખડીયો (ગ્રે)"], a: 3, s: "સૂર્યપ્રકાશમાં AgCl નું વિઘટન થવાથી તે ગ્રે બને છે. [સંદર્ભ: 11]", d: "Easy" },
+        { q: "શ્વાસોચ્છ્વાસ દરમિયાન ઉર્જા મુક્ત થાય છે, તેથી તેને કેવી પ્રક્રિયા કહેવાય?", o: ["ઉષ્માશોષક", "ઉષ્માક્ષેપક", "સંયોગીકરણ", "વિઘટન"], a: 1, s: "ઉર્જા મુક્ત થતી હોવાથી તે ઉષ્માક્ષેપક છે. [સંદર્ભ: 184]", d: "Easy" },
+        { q: "ખોરાપણું અટકાવવા કયો વાયુ વપરાય છે?", o: ["ઓક્સિજન", "હાઇડ્રોજન", "નાઇટ્રોજન", "ક્લોરીન"], a: 2, s: "ચિપ્સના પેકેટમાં નાઇટ્રોજન ભરવામાં આવે છે. [સંદર્ભ: 334]", d: "Easy" },
+
+        // Moderate (16-35)
+        { q: "Fe + H2O -> Fe3O4 + H2 ને સમતોલિત કરતા H2O નો સહગુણક શું આવશે?", o: ["1", "2", "3", "4"], a: 3, s: "3Fe + 4H2O -> Fe3O4 + 4H2. [સંદર્ભ: 113]", d: "Moderate" },
+        { q: "કેલ્શિયમ કાર્બોનેટને ગરમ કરતા કયા પદાર્થો મળે છે?", o: ["CaO + H2O", "CaO + CO2", "Ca + CO2", "Ca(OH)2 + CO2"], a: 1, s: "CaCO3 -> CaO + CO2 (ઉષ્મીય વિઘટન). [સંદર્ભ: 193]", d: "Moderate" },
+        { q: "Pb + CuCl2 -> PbCl2 + Cu એ કયા પ્રકારની પ્રક્રિયા છે?", o: ["સંયોગીકરણ", "વિસ્થાપન", "દ્વિવિસ્થાપન", "વિઘટન"], a: 1, s: "Pb એ Cu ને તેના દ્રાવણમાંથી વિસ્થાપિત કરે છે. [સંદર્ભ: 256]", d: "Moderate" },
+        { q: "આયર્ન સલ્ફેટ (FeSO4) ના સ્ફટિકને ગરમ કરતા કેવો રંગ પરિવર્તન થાય છે?", o: ["લીલામાંથી સફેદ", "સફેદમાંથી લીલો", "લીલામાંથી કથ્થાઈ", "રંગહીન"], a: 2, s: "FeSO4 ના સ્ફટિક ગરમ કરતા કથ્થાઈ Fe2O3 બને છે. [સંદર્ભ: 202]", d: "Moderate" },
+        { q: "લેડ નાઈટ્રેટને ગરમ કરતા કયા રંગનો ધુમાડો નીકળે છે?", o: ["સફેદ", "કાળો", "કથ્થાઈ", "પીળો"], a: 2, s: "નાઈટ્રોજન ડાયોક્સાઈડ (NO2) ના કથ્થાઈ ધુમાડા ઉત્પન્ન થાય છે. [સંદર્ભ: 213]", d: "Moderate" },
+        { q: "બેરિયમ ક્લોરાઈડ અને સોડિયમ સલ્ફેટની પ્રક્રિયાથી કેવા રંગના અવક્ષેપ મળે છે?", o: ["પીળા", "સફેદ", "વાદળી", "કાળા"], a: 1, s: "BaSO4 ના સફેદ અવક્ષેપ મળે છે. [સંદર્ભ: 275]", d: "Moderate" },
+        { q: "રેડોક્ષ પ્રક્રિયામાં શું થાય છે?", o: ["માત્ર ઓક્સિડેશન", "માત્ર રિડક્શન", "બંને એકસાથે", "એકપણ નહીં"], a: 2, s: "જેમાં ઓક્સિડેશન અને રિડક્શન બંને સાથે થાય તેને રેડોક્ષ કહે છે. [સંદર્ભ: 295]", d: "Moderate" },
+        { q: "તાંબાના વાસણ પર કયા રંગનો ક્ષાર બાઝે છે?", o: ["કાળો", "લાલ", "લીલો", "સફેદ"], a: 2, s: "તાંબા પર લીલા રંગનો ક્ષાર બાઝે છે. [સંદર્ભ: 321]", d: "Moderate" },
+        { q: "ZnO + C -> Zn + CO માં કોનું રિડક્શન થાય છે?", o: ["C", "Zn", "ZnO", "CO"], a: 2, s: "ZnO ઓક્સિજન ગુમાવે છે, તેથી તેનું રિડક્શન થાય છે. [સંદર્ભ: 303]", d: "Moderate" },
+        { q: "વનસ્પતિજ દ્રવ્યનું વિઘટન થઈ ખાતર બનવું એ કઈ પ્રક્રિયા છે?", o: ["ઉષ્માશોષક", "ઉષ્માક્ષેપક", "વિસ્થાપન", "દ્વિવિસ્થાપન"], a: 1, s: "તે ઉષ્માક્ષેપક પ્રક્રિયા છે. [સંદર્ભ: 178]", d: "Moderate" },
+        { q: "દીવાલ ધોળ્યા પછી બે-ત્રણ દિવસ પછી ચમક શાના કારણે આવે છે?", o: ["CaO", "Ca(OH)2", "CaCO3", "CaSO4"], a: 2, s: "CO2 સાથે પ્રક્રિયા થઈ CaCO3 નું સ્તર બને છે. [સંદર્ભ: 161]", d: "Moderate" },
+        { q: "MnO2 + 4HCl -> MnCl2 + 2H2O + Cl2 માં ઓક્સિડેશન પામતો પદાર્થ કયો છે?", o: ["MnO2", "HCl", "MnCl2", "H2O"], a: 1, s: "HCl હાઇડ્રોજન ગુમાવે છે, તેથી તેનું ઓક્સિડેશન થાય છે. [સંદર્ભ: 310]", d: "Moderate" },
+        { q: "લોખંડ કરતા વધુ સક્રિય ધાતુ કઈ છે?", o: ["Cu", "Ag", "Zn", "Au"], a: 2, s: "ઝિંક એ લોખંડ કરતા વધુ સક્રિય છે, તેથી ગૅલ્વેનાઇઝેશનમાં વપરાય છે. [સંદર્ભ: 325]", d: "Moderate" },
+        { q: "નીચેનામાંથી કઈ પ્રક્રિયા ઉષ્માશોષક છે?", o: ["કુદરતી વાયુનું દહન", "શ્વસન", "સિલ્વર ક્લોરાઈડનું વિઘટન", "મેગ્નેશિયમનું દહન"], a: 2, s: "પ્રકાશની હાજરીમાં થતું વિઘટન ઉર્જા શોષે છે. [સંદર્ભ: 229]", d: "Moderate" },
+        { q: "ગૅલ્વેનાઇઝ્ડ આયર્ન એટલે શું?", o: ["Cu નું પડ ધરાવતું લોખંડ", "Zn નું પડ ધરાવતું લોખંડ", "રંગ કરેલું લોખંડ", "શુદ્ધ લોખંડ"], a: 1, s: "ઝિંકનું પડ ધરાવતા લોખંડને ગૅલ્વેનાઇઝ્ડ આયર્ન કહે છે. [સંદર્ભ: 326]", d: "Moderate" },
+        { q: "ખોરાકને હવાચુસ્ત પાત્રમાં રાખવાથી શું થાય?", o: ["ઓક્સિડેશન ઝડપી થાય", "ઓક્સિડેશન ધીમું થાય", "રિડક્શન થાય", "સ્વાદ વધે"], a: 1, s: "હવાચુસ્ત પાત્ર ઓક્સિડેશન ધીમું પાડે છે. [સંદર્ભ: 333]", d: "Moderate" },
+        { q: "આયર્ન ઓક્સાઈડનું સૂત્ર શું છે જે કાટમાં જોવા મળે છે?", o: ["FeO", "Fe2O3", "Fe3O4", "Fe(OH)2"], a: 1, s: "લાલાશ પડતો કથ્થાઈ પાઉડર Fe2O3 છે. [સંદર્ભ: 202]", d: "Moderate" },
+        { q: "ચૂનાના પથ્થરનું રાસાયણિક નામ શું છે?", o: ["કેલ્શિયમ ઓક્સાઈડ", "કેલ્શિયમ હાઇડ્રૉક્સાઇડ", "કેલ્શિયમ કાર્બોનેટ", "કેલ્શિયમ સલ્ફેટ"], a: 2, s: "કેલ્શિયમ કાર્બોનેટ (CaCO3). [સંદર્ભ: 197]", d: "Moderate" },
+        { q: "પ્રક્રિયકો વચ્ચે આયનોની આપ-લે થતી હોય તેવી પ્રક્રિયાને શું કહેવાય?", o: ["વિસ્થાપન", "દ્વિવિસ્થાપન", "સંયોગીકરણ", "વિઘટન"], a: 1, s: "આયનોની અદલાબદલી દ્વિવિસ્થાપનમાં થાય છે. [સંદર્ભ: 265]", d: "Moderate" },
+        { q: "સિલ્વર બ્રોમાઈડનો ઉપયોગ ક્યાં થાય છે?", o: ["ફોટોગ્રાફી", "ચૂનાની બનાવટ", "ક્ષારણ રોકવા", "ખોરાપણું રોકવા"], a: 0, s: "શ્યામ-શ્વેત ફોટોગ્રાફીમાં AgBr વપરાય છે.", d: "Moderate" },
+
+        // Hard (36-50) & Assertion-Reason & Case-Based
+        { q: "વિધાન (A): શ્વસન એ ઉષ્માક્ષેપક પ્રક્રિયા છે.<br>કારણ (R): શ્વસન દરમિયાન ગ્લુકોઝનું ઓક્સિજન સાથે સંયોજાઈ ઉર્જા મુક્ત થાય છે.", o: ["A અને R બંને સાચા છે અને R એ A ની સાચી સમજૂતી છે", "A અને R બંને સાચા છે પણ R એ A ની સાચી સમજૂતી નથી", "A સાચું છે પણ R ખોટું છે", "A ખોટું છે પણ R સાચું છે"], a: 0, s: "ગ્લુકોઝના દહનથી ઉર્જા મળે છે, તેથી તે ઉષ્માક્ષેપક છે. [સંદર્ભ: 184]", d: "Hard" },
+        { q: "વિધાન (A): લોખંડ પર ઝિંકનું પડ ચડાવવાની ક્રિયાને ગૅલ્વેનાઇઝેશન કહે છે.<br>કારણ (R): ઝિંક એ લોખંડ કરતા ઓછી ક્રિયાશીલ ધાતુ છે.", o: ["A અને R બંને સાચા છે", "A સાચું છે પણ R ખોટું છે", "A ખોટું છે પણ R સાચું છે", "બંને ખોટા છે"], a: 1, s: "ઝિંક એ લોખંડ કરતા 'વધુ' ક્રિયાશીલ છે. [સંદર્ભ: 325]", d: "Hard" },
+        { q: "વિધાન (A): તેલી ખોરાકમાં એન્ટી-ઓક્સિડન્ટ ઉમેરવામાં આવે છે.<br>કારણ (R): તે ઓક્સિડેશન પ્રક્રિયાને ઝડપી બનાવે છે.", o: ["A સાચું, R સાચું", "A સાચું, R ખોટું", "A ખોટું, R સાચું", "બંને ખોટા"], a: 1, s: "એન્ટી-ઓક્સિડન્ટ ઓક્સિડેશનનો પ્રતિકાર કરે છે (ધીમું પાડે છે). [સંદર્ભ: 332]", d: "Hard" },
+        { q: "વિધાન (A): સિલ્વર ક્લોરાઈડને ઘેરા રંગની બોટલમાં રાખવામાં આવે છે.<br>કારણ (R): સૂર્યપ્રકાશમાં તેનું વિઘટન રોકવા માટે.", o: ["A અને R બંને સાચા છે", "A સાચું, R ખોટું", "A ખોટું, R સાચું", "બંને ખોટા"], a: 0, s: "AgCl પ્રકાશ સંવેદનશીલ છે.", d: "Hard" },
+        { q: "વિધાન (A): ચિપ્સના પેકેટમાં નાઇટ્રોજન ભરવામાં આવે છે.<br>કારણ (R): નાઇટ્રોજન એ સક્રિય વાયુ છે.", o: ["A સાચું, R સાચું", "A સાચું, R ખોટું", "A ખોટું, R સાચું", "બંને ખોટા"], a: 1, s: "નાઇટ્રોજન એ નિષ્ક્રિય (Inert) વાયુ છે. [સંદર્ભ: 334]", d: "Hard" },
+        { q: "વિધાન (A): કળીચૂનામાં પાણી ઉમેરતા પાત્ર ગરમ થાય છે.<br>કારણ (R): તે ઉષ્માશોષક પ્રક્રિયા છે.", o: ["A સાચું, R સાચું", "A સાચું, R ખોટું", "A ખોટું, R સાચું", "બંને ખોટા"], a: 1, s: "તે ઉષ્માક્ષેપક પ્રક્રિયા છે. [સંદર્ભ: 147]", d: "Hard" },
+        { q: "વિધાન (A): સમતોલિત રાસાયણિક સમીકરણમાં બંને બાજુ દળ સમાન હોય છે.<br>કારણ (R): દળ સંચયના નિયમ મુજબ દળનું સર્જન કે વિનાશ થઈ શકતો નથી.", o: ["A અને R બંને સાચા છે", "A સાચું, R ખોટું", "A ખોટું, R સાચું", "બંને ખોટા"], a: 0, s: "દળ સંચયનો નિયમ પાલન થાય છે. [સંદર્ભ: 55]", d: "Hard" },
+        { q: "વિધાન (A): કોપર સલ્ફેટના દ્રાવણમાં લોખંડની ખીલી મૂકતા રંગ બદલાય છે.<br>કારણ (R): લોખંડ કોપરનું વિસ્થાપન કરે છે.", o: ["A અને R બંને સાચા છે", "A સાચું, R ખોટું", "A ખોટું, R સાચું", "બંને ખોટા"], a: 0, s: "Fe એ Cu કરતા વધુ સક્રિય હોવાથી વિસ્થાપન થાય છે. [સંદર્ભ: 248]", d: "Hard" },
+        
+        // Case Study 1: Decomposition (44-45)
+        { q: "કેસ સ્ટડી: એક વિદ્યાર્થી કસનળીમાં 2g ફેરસ સલ્ફેટ લઈને ગરમ કરે છે.<br>પ્રશ્ન: આ પ્રક્રિયા દરમિયાન કયા વાયુઓ ઉત્પન્ન થાય છે?", o: ["O2 + H2", "SO2 + SO3", "CO2 + CO", "NH3"], a: 1, s: "FeSO4 ના વિઘટનથી SO2 અને SO3 મળે છે. [સંદર્ભ: 202]", d: "Hard" },
+        { q: "આ પ્રક્રિયામાં નીપજ તરીકે મળતો ફેરિક ઓક્સાઈડ (Fe2O3) કઈ અવસ્થામાં હોય છે?", o: ["વાયુ", "પ્રવાહી", "ઘન", "જલીય"], a: 2, s: "Fe2O3 એ ઘન (s) અવસ્થામાં હોય છે. [સંદર્ભ: 202]", d: "Hard" },
+
+        // Case Study 2: Double Displacement (46-47)
+        { q: "કેસ સ્ટડી: સોડિયમ સલ્ફેટ અને બેરિયમ ક્લોરાઈડના દ્રાવણોને મિશ્ર કરવામાં આવે છે.<br>પ્રશ્ન: બનતા સફેદ પદાર્થનું નામ શું છે?", o: ["NaCl", "BaSO4", "Na2Cl2", "BaS"], a: 1, s: "બેરિયમ સલ્ફેટના સફેદ અવક્ષેપ મળે છે. [સંદર્ભ: 275]", d: "Hard" },
+        { q: "આ પ્રક્રિયાને અવક્ષેપન પ્રક્રિયા કેમ કહેવાય છે?", o: ["રંગ બદલાય છે", "અદ્રાવ્ય પદાર્થ બને છે", "ઉષ્મા શોષાય છે", "વાયુ મુક્ત થાય છે"], a: 1, s: "અદ્રાવ્ય અવક્ષેપ ઉત્પન્ન થતા હોવાથી. [સંદર્ભ: 273]", d: "Hard" },
+
+        // Case Study 3: Displacement (48-50)
+        { q: "કેસ સ્ટડી: ઝિંકની પટ્ટીને કોપર સલ્ફેટના દ્રાવણમાં ડુબાડવામાં આવે છે.<br>પ્રશ્ન: ઝિંક સલ્ફેટના દ્રાવણનો રંગ કેવો હશે?", o: ["વાદળી", "લીલો", "રંગહીન", "લાલ"], a: 2, s: "ZnSO4 નું દ્રાવણ રંગહીન હોય છે.", d: "Hard" },
+        { q: "નીચેનામાંથી કઈ જોડી વિસ્થાપન પ્રક્રિયા આપશે?", o: ["NaCl દ્રાવણ + Cu", "MgCl2 દ્રાવણ + Al", "FeSO4 દ્રાવણ + Ag", "AgNO3 દ્રાવણ + Cu"], a: 3, s: "Cu એ Ag કરતા વધુ સક્રિય હોવાથી તેનું વિસ્થાપન કરશે.", d: "Hard" },
+        { q: "ચિપ્સના પેકેટમાં નાઇટ્રોજન વાયુ શા માટે ભરવામાં આવે છે?", o: ["ચિપ્સને કડક રાખવા", "ઓક્સિડેશન અટકાવવા", "પેકેટ મોટું દેખાડવા", "સ્વાદ વધારવા"], a: 1, s: "નાઇટ્રોજન એ એન્ટી-ઓક્સિડન્ટ તરીકે કાર્ય કરી ખોરાપણું અટકાવે છે. [સંદર્ભ: 334]", d: "Hard" }
+    ];
+
+    let currentQ = 0;
+    let answers = new Array(questions.length).fill(null);
+    let timerSeconds = 45 * 60;
+    let timerInterval;
+
+    function init() {
+        renderPalette();
+        showQuestion();
+        startTimer();
+    }
+
+    function renderPalette() {
+        const p = document.getElementById('palette');
+        p.innerHTML = '';
+        questions.forEach((_, i) => {
+            const btn = document.createElement('div');
+            btn.className = 'p-btn';
+            btn.id = `p-btn-${i}`;
+            btn.innerText = i + 1;
+            btn.onclick = () => jumpToQuestion(i);
+            p.appendChild(btn);
+        });
+    }
+
+    function showQuestion() {
+        const q = questions[currentQ];
+        document.getElementById('q-number').innerText = `પ્રશ્ન ${currentQ + 1}/${questions.length}`;
+        document.getElementById('q-diff').innerText = `કઠિનતા: ${q.d}`;
+        document.getElementById('question-text').innerHTML = q.q;
+        
+        const list = document.getElementById('options-list');
+        list.innerHTML = '';
+        q.o.forEach((opt, i) => {
+            const div = document.createElement('div');
+            div.className = `option ${answers[currentQ] === i ? 'selected' : ''}`;
+            div.innerHTML = `<strong>${String.fromCharCode(65+i)}.</strong> ${opt}`;
+            div.onclick = () => selectOption(i);
+            list.appendChild(div);
+        });
+
+        document.getElementById('submit-quiz').style.display = currentQ === questions.length - 1 ? 'block' : 'none';
+        document.getElementById('next-btn').style.display = currentQ === questions.length - 1 ? 'none' : 'block';
+        
+        // Update Palette Active
+        document.querySelectorAll('.p-btn').forEach(b => b.classList.remove('active'));
+        document.getElementById(`p-btn-${currentQ}`).classList.add('active');
+    }
+
+    function selectOption(idx) {
+        answers[currentQ] = idx;
+        document.getElementById(`p-btn-${currentQ}`).classList.add('answered');
+        showQuestion();
+    }
+
+    function changeQuestion(dir) {
+        if (currentQ + dir >= 0 && currentQ + dir < questions.length) {
+            currentQ += dir;
+            showQuestion();
+        }
+    }
+
+    function jumpToQuestion(i) {
+        currentQ = i;
+        showQuestion();
+    }
+
+    function startTimer() {
+        timerInterval = setInterval(() => {
+            timerSeconds--;
+            let mins = Math.floor(timerSeconds / 60);
+            let secs = timerSeconds % 60;
+            document.getElementById('timer').innerText = `${mins}:${secs < 10 ? '0' : ''}${secs}`;
+            if (timerSeconds <= 0) {
+                clearInterval(timerInterval);
+                calculateResult();
+            }
+        }, 1000);
+    }
+
+    function calculateResult() {
+        clearInterval(timerInterval);
+        document.getElementById('quiz-container').style.display = 'none';
+        document.getElementById('result-screen').style.display = 'block';
+        
+        let score = 0;
+        const review = document.getElementById('review-area');
+        review.innerHTML = '<h3>Solution & Review</h3>';
+
+        questions.forEach((q, i) => {
+            const isCorrect = answers[i] === q.a;
+            if (isCorrect) score++;
+
+            const div = document.createElement('div');
+            div.className = 'review-card';
+            div.innerHTML = `
+                <p><strong>Q${i+1}:</strong> ${q.q}</p>
+                <p>તમારો જવાબ: <span class="${isCorrect ? 'correct-ans' : 'wrong-ans'}">${answers[i] !== null ? q.o[answers[i]] : 'આપેલ નથી'}</span></p>
+                <p>સાચો જવાબ: <span class="correct-ans">${q.o[q.a]}</span></p>
+                <div class="solution-box"><strong>સમજૂતી:</strong> ${q.s}</div>
+            `;
+            review.appendChild(div);
+        });
+
+        const percent = (score / questions.length) * 100;
+        document.getElementById('score-val').innerText = `${score}/${questions.length}`;
+        document.getElementById('percentage-val').innerText = `ટકાવારી: ${percent.toFixed(2)}%`;
+        
+        let grade = "";
+        let color = "";
+        if (percent >= 80) { grade = "EXCELLENT"; color = "var(--success)"; }
+        else if (percent >= 60) { grade = "GOOD"; color = "blue"; }
+        else if (percent >= 40) { grade = "AVERAGE"; color = "orange"; }
+        else { grade = "NEEDS IMPROVEMENT"; color = "var(--danger)"; }
+        
+        const gBox = document.getElementById('grade-box');
+        gBox.innerText = grade;
+        gBox.style.color = color;
+    }
+
+    init();
+</script>
+
+</body>
+</html>
