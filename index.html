@@ -1,121 +1,250 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-<title>Chemistry CBT Test</title>
-<style>
-body{font-family:Arial;background:#f4f6f9;text-align:center;}
-#quiz-container{width:60%;margin:auto;background:white;padding:20px;border-radius:10px;box-shadow:0 0 10px gray;}
-button{padding:10px 20px;margin:10px;border:none;border-radius:5px;background:#007bff;color:white;cursor:pointer;}
-.option{display:block;margin:10px;padding:10px;border:1px solid #ccc;border-radius:5px;cursor:pointer;}
-.option:hover{background:#e3f2fd;}
-.progress{height:10px;background:#ddd;border-radius:5px;margin-bottom:15px;}
-.progress-bar{height:10px;background:green;width:0%;border-radius:5px;}
-</style>
-</head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DDCET CBT: Chemical Reactions & Equations</title>
+    <style>
+        :root {
+            --primary: #2563eb;
+            --secondary: #64748b;
+            --success: #22c55e;
+            --danger: #ef4444;
+            --bg: #f8fafc;
+            --card: #ffffff;
+            --text: #1e293b;
+        }
 
+        * { box-sizing: border-box; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+        body { background-color: var(--bg); color: var(--text); margin: 0; display: flex; flex-direction: column; min-height: 100vh; }
+        
+        header { background: var(--primary); color: white; padding: 1rem 2rem; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+        .timer { font-size: 1.2rem; font-weight: bold; background: rgba(0,0,0,0.2); padding: 0.5rem 1rem; border-radius: 4px; }
+
+        main { flex: 1; display: flex; justify-content: center; align-items: flex-start; padding: 2rem 1rem; }
+        .quiz-container { background: var(--card); width: 100%; max-width: 800px; border-radius: 8px; shadow: 0 4px 6px -1px rgba(0,0,0,0.1); padding: 2rem; border-top: 5px solid var(--primary); }
+
+        .q-header { display: flex; justify-content: space-between; margin-bottom: 1.5rem; color: var(--secondary); font-weight: 600; border-bottom: 1px solid #e2e8f0; padding-bottom: 0.5rem; }
+        .question-text { font-size: 1.2rem; margin-bottom: 1.5rem; line-height: 1.5; }
+        
+        .options-grid { display: grid; gap: 1rem; }
+        .option { border: 2px solid #e2e8f0; padding: 1rem; border-radius: 8px; cursor: pointer; transition: all 0.2s; position: relative; }
+        .option:hover { border-color: var(--primary); background: #f0f7ff; }
+        .option.selected { border-color: var(--primary); background: #eff6ff; font-weight: bold; }
+
+        .nav-buttons { display: flex; justify-content: space-between; margin-top: 2rem; gap: 1rem; }
+        button { padding: 0.75rem 1.5rem; border: none; border-radius: 4px; cursor: pointer; font-weight: 600; transition: opacity 0.2s; }
+        .btn-prev { background: var(--secondary); color: white; }
+        .btn-next { background: var(--primary); color: white; }
+        .btn-submit { background: var(--success); color: white; }
+        button:disabled { opacity: 0.5; cursor: not-allowed; }
+
+        #result-screen { display: none; text-align: center; }
+        .score-box { font-size: 2rem; font-weight: bold; margin: 1rem 0; color: var(--primary); }
+        .rank { font-size: 1.5rem; margin-bottom: 2rem; }
+        
+        .review-section { text-align: left; margin-top: 2rem; }
+        .review-item { border: 1px solid #e2e8f0; padding: 1rem; margin-bottom: 1rem; border-radius: 8px; }
+        .correct-bg { background: #f0fdf4; border-left: 5px solid var(--success); }
+        .wrong-bg { background: #fef2f2; border-left: 5px solid var(--danger); }
+        .solution { font-size: 0.9rem; margin-top: 0.5rem; color: #475569; font-style: italic; border-top: 1px dashed #cbd5e1; padding-top: 0.5rem; }
+
+        @media (max-width: 600px) {
+            header { flex-direction: column; gap: 0.5rem; text-align: center; }
+            .nav-buttons { flex-direction: column; }
+        }
+    </style>
+</head>
 <body>
 
-<h2>Chemical Reactions & Equations Test</h2>
-<div id="timer">Time: 30:00</div>
+<header>
+    <div>DDCET 2026: Chemistry Section</div>
+    <div class="timer" id="timer">30:00</div>
+</header>
 
-<div id="quiz-container">
-<div class="progress"><div class="progress-bar" id="progress"></div></div>
-<div id="question"></div>
-<div id="options"></div>
-<button onclick="nextQuestion()">Next</button>
-</div>
+<main>
+    <div id="start-screen" class="quiz-container" style="text-align: center;">
+        <h2>Chemical Reactions and Equations</h2>
+        <p>Total Questions: 25 | Time: 30 Minutes | Marks: 50</p>
+        <ul style="text-align: left; display: inline-block; margin: 1rem 0;">
+            <li>+2 for correct answer</li>
+            <li>0 for incorrect answer</li>
+            <li>Do not refresh the page during the exam</li>
+        </ul>
+        <br>
+        <button class="btn-next" onclick="startQuiz()">START TEST</button>
+    </div>
 
-<div id="result" style="display:none;"></div>
+    <div id="quiz-screen" class="quiz-container" style="display: none;">
+        <div class="q-header">
+            <span id="q-count">Question 1/25</span>
+            <span id="q-difficulty">Level: Easy</span>
+        </div>
+        <div id="question-container">
+            <div class="question-text" id="question-text">Loading...</div>
+            <div class="options-grid" id="options-grid"></div>
+        </div>
+        <div class="nav-buttons">
+            <button class="btn-prev" id="prev-btn" onclick="prevQuestion()">Previous</button>
+            <button class="btn-next" id="next-btn" onclick="nextQuestion()">Next</button>
+            <button class="btn-submit" id="submit-btn" style="display:none;" onclick="showResult()">Submit Test</button>
+        </div>
+    </div>
+
+    <div id="result-screen" class="quiz-container">
+        <h2>Test Report</h2>
+        <div class="score-box" id="final-score">0 / 50</div>
+        <div class="rank" id="rank-text">Grade</div>
+        <div id="percentage-text">0%</div>
+        <hr>
+        <h3>Review Solutions</h3>
+        <div id="review-container" class="review-section"></div>
+        <button class="btn-next" onclick="location.reload()" style="margin-top: 1rem;">Restart Test</button>
+    </div>
+</main>
 
 <script>
+    const questions = [
+        // EASY (8)
+        { q: "What happens when magnesium ribbon is burnt in air?", a: "Magnesium oxide is formed", o: ["Magnesium oxide is formed", "Magnesium chloride is formed", "Magnesium carbonate is formed", "No reaction occurs"], s: "Magnesium reacts with Oxygen to form MgO (Combination reaction).", diff: "Easy" },
+        { q: "Identify the catalyst in the decomposition of Potassium Chlorate (KClO₃).", a: "MnO₂", o: ["Fe", "MnO₂", "Ni", "Pt"], s: "Manganese dioxide acts as a catalyst to speed up the decomposition.", diff: "Easy" },
+        { q: "Which of the following is a physical change?", a: "Melting of Ice", o: ["Melting of Ice", "Rusting of Iron", "Burning of Candle", "Curdling of Milk"], s: "Phase changes like melting are physical; the chemical composition remains H₂O.", diff: "Easy" },
+        { q: "The chemical formula of Quicklime is:", a: "CaO", o: ["Ca(OH)₂", "CaCO₃", "CaO", "CaCl₂"], s: "CaO is Quicklime; Ca(OH)₂ is Slaked lime.", diff: "Easy" },
+        { q: "Reaction: Zn + CuSO₄ → ZnSO₄ + Cu is an example of:", a: "Displacement", o: ["Combination", "Decomposition", "Displacement", "Double Displacement"], s: "Zn is more reactive than Cu and displaces it.", diff: "Easy" },
+        { q: "The sign (↑) in a chemical equation indicates:", a: "Evolution of gas", o: ["Formation of precipitate", "Evolution of gas", "Absorption of heat", "Change in state"], s: "Upward arrow represents gaseous products escaping.", diff: "Easy" },
+        { q: "Which gas is used in the storage of fat-containing foods for a long time?", a: "Nitrogen", o: ["Oxygen", "Carbon dioxide", "Nitrogen", "Neon"], s: "Nitrogen is inert and prevents oxidation (rancidity).", diff: "Easy" },
+        { q: "The balancing of chemical equations is based on which law?", a: "Law of Conservation of Mass", o: ["Law of Multiple Proportions", "Law of Constant Proportions", "Law of Conservation of Mass", "Avogadro's Law"], s: "Mass can neither be created nor destroyed in a chemical reaction.", diff: "Easy" },
 
-let questions = [
-{
-q:"Balance: Fe + O2 → Fe2O3",
-options:["2Fe + O2 → Fe2O3","4Fe + 3O2 → 2Fe2O3","3Fe + O2 → Fe3O4","None"],
-answer:1,
-solution:"Correct balance is 4Fe + 3O2 → 2Fe2O3"
-},
-{
-q:"Type: CaO + H2O → Ca(OH)2",
-options:["Combination","Decomposition","Displacement","Double Displacement"],
-answer:0,
-solution:"Two substances combine → Combination reaction"
-},
-{
-q:"Balance: NH3 + O2 → NO + H2O",
-options:["4NH3 + 5O2 → 4NO + 6H2O","NH3 + O2 → NO + H2O","2NH3 + O2 → 2NO","None"],
-answer:0,
-solution:"Balanced form is 4NH3 + 5O2 → 4NO + 6H2O"
-}
-];
+        // MODERATE (9)
+        { q: "Balance the equation: aFe + bH₂O → cFe₃O₄ + dH₂. The coefficients (a,b,c,d) are:", a: "3, 4, 1, 4", o: ["3, 4, 1, 4", "1, 1, 1, 1", "3, 2, 1, 2", "2, 4, 1, 4"], s: "Balanced: 3Fe + 4H₂O → Fe₃O₄ + 4H₂.", diff: "Moderate" },
+        { q: "In the reaction: Pb + CuCl₂ → PbCl₂ + Cu, which substance is getting reduced?", a: "CuCl₂", o: ["Pb", "CuCl₂", "PbCl₂", "Cu"], s: "Copper ions in CuCl₂ gain electrons to become Cu metal (Reduction).", diff: "Moderate" },
+        { q: "White Silver Chloride turns grey in sunlight. This is a _______ reaction.", a: "Photolytic decomposition", o: ["Thermal decomposition", "Photolytic decomposition", "Electrolytic decomposition", "Displacement"], s: "Sunlight breaks down AgCl into Ag and Cl₂.", diff: "Moderate" },
+        { q: "Assertion (A): Calcium carbonate when heated gives Calcium oxide and Water.<br>Reason (R): It is a thermal decomposition reaction.", a: "A is False, R is True", o: ["Both A and R are true, R is correct explanation", "Both A and R are true, R is not correct explanation", "A is True, R is False", "A is False, R is True"], s: "Heating CaCO₃ gives CaO and CO₂ (not Water).", diff: "Moderate" },
+        { q: "Barium chloride reacts with Aluminum sulphate to form Barium sulphate and Aluminum chloride. This is:", a: "Double Displacement", o: ["Combination", "Decomposition", "Displacement", "Double Displacement"], s: "Exchange of ions (Ba²⁺ and Al³⁺) occurs.", diff: "Moderate" },
+        { q: "Electrolysis of water is a decomposition reaction. The mole ratio of hydrogen and oxygen gas liberated is:", a: "2 : 1", o: ["1 : 1", "2 : 1", "4 : 1", "1 : 2"], s: "2H₂O → 2H₂ + O₂. Ratio of moles is 2:1.", diff: "Moderate" },
+        { q: "Fatty foods become rancid due to the process of:", a: "Oxidation", o: ["Oxidation", "Reduction", "Corrosion", "Hydrogenation"], s: "Oxidation of fats leads to bad smell and taste.", diff: "Moderate" },
+        { q: "Which of the following is an endothermic process?", a: "Sublimation of dry ice", o: ["Respiration", "Neutralization", "Burning of Natural Gas", "Sublimation of dry ice"], s: "Sublimation requires absorption of heat energy.", diff: "Moderate" },
+        { q: "Assertion (A): Respiration is an exothermic reaction.<br>Reason (R): Glucose combines with oxygen in cells and releases energy.", a: "Both A and R are true, R is correct explanation", o: ["Both A and R are true, R is correct explanation", "Both A and R are true, R is not correct explanation", "A is True, R is False", "A is False, R is True"], s: "Respiration releases energy, hence exothermic.", diff: "Moderate" },
 
-let current = 0;
-let score = 0;
-let selected = -1;
-let time = 1800;
+        // HARD (8)
+        { q: "Case Study: A student takes 2g of Ferrous Sulphate crystals in a dry boiling tube and heats it over a flame.<br>What is the change in color observed?", a: "Green to Brown", o: ["White to Blue", "Green to Brown", "Colorless to Pink", "Blue to Green"], s: "Green FeSO₄.7H₂O loses water and then decomposes to brown Fe₂O₃.", diff: "Hard" },
+        { q: "In the previous Case Study, what are the gases evolved?", a: "SO₂ and SO₃", o: ["O₂ and H₂", "SO₂ and SO₃", "CO₂ and CO", "NO₂ and O₂"], s: "Decomposition of FeSO₄ produces SO₂ and SO₃ gases.", diff: "Hard" },
+        { q: "Identify 'x' and 'y' in: Cu + xHNO₃ → Cu(NO₃)₂ + yNO₂ + 2H₂O", a: "x=4, y=2", o: ["x=2, y=2", "x=4, y=1", "x=4, y=2", "x=2, y=1"], s: "Balanced: Cu + 4HNO₃ → Cu(NO₃)₂ + 2NO₂ + 2H₂O.", diff: "Hard" },
+        { q: "Assertion (A): Burning of Magnesium ribbon should be done after cleaning it with sandpaper.<br>Reason (R): Magnesium reacts with moist air to form a stable layer of Magnesium Carbonate.", a: "Both A and R are true, R is correct explanation", o: ["Both A and R are true, R is correct explanation", "Both A and R are true, R is not correct explanation", "A is True, R is False", "A is False, R is True"], s: "The layer of basic magnesium carbonate interferes with burning.", diff: "Hard" },
+        { q: "A reddish-brown metal 'X' on heating in air forms a black coating 'Y'. If H₂ gas is passed over 'Y', it changes back to 'X'. Identify X and Y.", a: "X=Cu, Y=CuO", o: ["X=Fe, Y=Fe₂O₃", "X=Cu, Y=CuO", "X=Ag, Y=Ag₂O", "X=Pb, Y=PbO"], s: "Copper (reddish-brown) + O₂ → CuO (black).", diff: "Hard" },
+        { q: "Assertion (A): Silver bromide is stored in dark bottles.<br>Reason (R): Silver bromide decomposes into silver and bromine in the presence of light.", a: "Both A and R are true, R is correct explanation", o: ["Both A and R are true, R is correct explanation", "Both A and R are true, R is not correct explanation", "A is True, R is False", "A is False, R is True"], s: "Dark bottles prevent photolytic decomposition.", diff: "Hard" },
+        { q: "When Hydrogen sulphide gas is passed through a blue solution of Copper sulphate, a black precipitate of Copper sulphide is obtained and Sulphuric acid is formed. This is a:", a: "Double Displacement", o: ["Displacement", "Double Displacement", "Decomposition", "Combination"], s: "CuSO₄ + H₂S → CuS(s) + H₂SO₄. Mutual exchange of ions.", diff: "Hard" },
+        { q: "Assertion (A): Rusting of iron is a redox reaction.<br>Reason (R): Iron is oxidized to Fe³⁺ and oxygen is reduced to O²⁻.", a: "Both A and R are true, R is correct explanation", o: ["Both A and R are true, R is correct explanation", "Both A and R are true, R is not correct explanation", "A is True, R is False", "A is False, R is True"], s: "Corrosion involves both oxidation and reduction.", diff: "Hard" }
+    ];
 
-function loadQuestion(){
-document.getElementById("question").innerHTML = (current+1)+". "+questions[current].q;
-let optionsHTML="";
-questions[current].options.forEach((opt,i)=>{
-optionsHTML+=`<div class="option" onclick="selectOption(${i})">${opt}</div>`;
-});
-document.getElementById("options").innerHTML=optionsHTML;
-document.getElementById("progress").style.width=((current)/questions.length*100)+"%";
-selected=-1;
-}
+    let currentQuestionIndex = 0;
+    let userAnswers = Array(questions.length).fill(null);
+    let timeLeft = 30 * 60;
+    let timerInterval;
 
-function selectOption(i){
-selected=i;
-}
+    function startQuiz() {
+        document.getElementById('start-screen').style.display = 'none';
+        document.getElementById('quiz-screen').style.display = 'block';
+        startTimer();
+        showQuestion();
+    }
 
-function nextQuestion(){
-if(selected==questions[current].answer){score+=4;}
-else if(selected!=-1){score-=1;}
+    function startTimer() {
+        timerInterval = setInterval(() => {
+            const minutes = Math.floor(timeLeft / 60);
+            const seconds = timeLeft % 60;
+            document.getElementById('timer').textContent = `${minutes}:${seconds < 10 ? '0' : ''}${seconds}`;
+            if (timeLeft <= 0) {
+                clearInterval(timerInterval);
+                showResult();
+            }
+            timeLeft--;
+        }, 1000);
+    }
 
-current++;
-if(current<questions.length){
-loadQuestion();
-}else{
-showResult();
-}
-}
+    function showQuestion() {
+        const q = questions[currentQuestionIndex];
+        document.getElementById('q-count').textContent = `Question ${currentQuestionIndex + 1}/${questions.length}`;
+        document.getElementById('q-difficulty').textContent = `Level: ${q.diff}`;
+        document.getElementById('question-text').innerHTML = q.q;
+        
+        const optionsGrid = document.getElementById('options-grid');
+        optionsGrid.innerHTML = '';
+        
+        q.o.forEach(opt => {
+            const div = document.createElement('div');
+            div.className = `option ${userAnswers[currentQuestionIndex] === opt ? 'selected' : ''}`;
+            div.textContent = opt;
+            div.onclick = () => selectOption(opt);
+            optionsGrid.appendChild(div);
+        });
 
-function showResult(){
-document.getElementById("quiz-container").style.display="none";
-let percent=(score/(questions.length*4))*100;
-let rank="Needs Improvement";
-if(percent>=80)rank="Excellent";
-else if(percent>=60)rank="Good";
-else if(percent>=40)rank="Average";
+        document.getElementById('prev-btn').disabled = currentQuestionIndex === 0;
+        if (currentQuestionIndex === questions.length - 1) {
+            document.getElementById('next-btn').style.display = 'none';
+            document.getElementById('submit-btn').style.display = 'block';
+        } else {
+            document.getElementById('next-btn').style.display = 'block';
+            document.getElementById('submit-btn').style.display = 'none';
+        }
+    }
 
-let resultHTML=`<h2>Test Completed</h2>
-<h3>Score: ${score}</h3>
-<h3>Percentage: ${percent.toFixed(2)}%</h3>
-<h3>Rank: ${rank}</h3><hr>`;
+    function selectOption(opt) {
+        userAnswers[currentQuestionIndex] = opt;
+        showQuestion();
+    }
 
-questions.forEach((q,i)=>{
-resultHTML+=`<p><b>Q${i+1}:</b> ${q.solution}</p>`;
-});
+    function nextQuestion() {
+        if (currentQuestionIndex < questions.length - 1) {
+            currentQuestionIndex++;
+            showQuestion();
+        }
+    }
 
-document.getElementById("result").innerHTML=resultHTML;
-document.getElementById("result").style.display="block";
-}
+    function prevQuestion() {
+        if (currentQuestionIndex > 0) {
+            currentQuestionIndex--;
+            showQuestion();
+        }
+    }
 
-setInterval(()=>{
-if(time>0){
-time--;
-let min=Math.floor(time/60);
-let sec=time%60;
-document.getElementById("timer").innerHTML="Time: "+min+":"+ (sec<10?"0"+sec:sec);
-}else{
-showResult();
-}
-},1000);
+    function showResult() {
+        clearInterval(timerInterval);
+        document.getElementById('quiz-screen').style.display = 'none';
+        document.getElementById('result-screen').style.display = 'block';
 
-loadQuestion();
+        let score = 0;
+        const reviewContainer = document.getElementById('review-container');
+        reviewContainer.innerHTML = '';
 
+        questions.forEach((q, i) => {
+            const isCorrect = userAnswers[i] === q.a;
+            if (isCorrect) score += 2;
+
+            const reviewItem = document.createElement('div');
+            reviewItem.className = `review-item ${isCorrect ? 'correct-bg' : 'wrong-bg'}`;
+            reviewItem.innerHTML = `
+                <strong>Q${i+1}: ${q.q}</strong><br>
+                <span>Your Answer: ${userAnswers[i] || 'Not Attempted'}</span><br>
+                <span style="color:var(--success)">Correct Answer: ${q.a}</span>
+                <div class="solution"><strong>Solution:</strong> ${q.s}</div>
+            `;
+            reviewContainer.appendChild(reviewItem);
+        });
+
+        const percentage = (score / 50) * 100;
+        document.getElementById('final-score').textContent = `${score} / 50`;
+        document.getElementById('percentage-text').textContent = `Percentage: ${percentage}%`;
+        
+        let rank = "";
+        if (percentage >= 80) rank = "EXCELLENT";
+        else if (percentage >= 60) rank = "GOOD";
+        else if (percentage >= 40) rank = "AVERAGE";
+        else rank = "NEEDS IMPROVEMENT";
+        
+        document.getElementById('rank-text').textContent = `Rank: ${rank}`;
+        document.getElementById('rank-text').style.color = percentage >= 60 ? 'var(--success)' : 'var(--danger)';
+    }
 </script>
 
 </body>
